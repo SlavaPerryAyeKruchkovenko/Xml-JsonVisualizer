@@ -6,7 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Logic.fs" />
     <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.2" />
   </ItemGroup>
 
 </Project>
