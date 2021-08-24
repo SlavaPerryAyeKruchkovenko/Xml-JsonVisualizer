@@ -3,6 +3,10 @@
 open System
 open VisualizerLogic
 open System.Threading
+open Newtonsoft.Json
+open Newtonsoft.Json
+open Newtonsoft.Json.Linq
+open System.IO
 
 type Printer() = 
     interface IDrawer with
@@ -26,15 +30,22 @@ let cells isLine size =
             line <- line + empty
         line <- line + point
     line
-
+(*let json = JObject.Parse(File.ReadAllText(fst path))*) 
 let printFrame height weight = 
     Console.Clear()
     for y in 0..height do
         Console.WriteLine(cells true weight);
-
+use json path = 
+    let reader = new JsonTextReader (File.OpenText path)
+    JObject (JToken.ReadFrom reader);
 [<EntryPoint>]
-let main argv =   
+let main argv =       
     let file = new ProjectFile(new Printer())
-    printf "%s" file.getPath
+    let mutable isPlay = true
+    let path = file.getPath
+    while isPlay do
+        if snd path then 
+            printf "%s" ("Open " + fst path)
+            isPlay <- false              
     0
  
