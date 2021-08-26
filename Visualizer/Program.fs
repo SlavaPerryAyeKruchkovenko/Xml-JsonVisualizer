@@ -5,6 +5,7 @@ open VisualizerLogic
 open System.Threading
 open System.IO
 open Microsoft.FSharp.Core
+open Exstension
 
 type Printer() = 
     interface IDrawer with
@@ -36,20 +37,24 @@ type Printer() =
         
         for y in 0..height do
             printer.PrintMessage (printCells true weight)
+
+    member this.printList (list: 'T list) = 
+        let reverseLists = list |> List.rev
+        for text in reverseLists do
+            printfn "%s" (text.ToString())
         
 
 (*let json = JObject.Parse(File.ReadAllText(fst path))*) 
 
 [<EntryPoint>]
-let main argv =       
-    let mutable isPlay = true
-    let printer: IDrawer = upcast new Printer()
+let main argv =           
+    let drawer: IDrawer = upcast new Printer()
+
     let getPath (prtiner: IDrawer) =   
         try
-            let printer = Printer() :> IDrawer
-            printer.Clear()
-            printer.PrintMessage "Please Enter File"
-            let file = printer.GetText()
+            prtiner.Clear()
+            prtiner.PrintMessage "Please Enter File"
+            let file = prtiner.GetText()
             if File.Exists file then
                 file.ToString(),true                  
             else
@@ -69,25 +74,26 @@ let main argv =
         else 
             None
 
-    let pathTuple = getPath printer    
+    let mutable pathTuple = getPath drawer 
+    let havePath() = snd pathTuple
+    let path() = fst pathTuple
 
-    while isPlay do
-        let path = fst pathTuple
-        let havePath = snd pathTuple
-        if havePath then 
-            printer.PrintMessage ("Open " + path)
-            isPlay <- false  
-        else
-            printer.PrintMessage path
-            pathTuple = getPath printer |> ignore
+    while not (havePath()) do
+         drawer.PrintMessage (path())
+         pathTuple <- getPath drawer
+    
+    drawer.Clear()
+    let print = drawer.PrintMessage ("Open " + path())
 
     let fileTuple = getFile (fst pathTuple)
     let file = fileTuple.Value
     let haveFile = fileTuple.IsSome
 
+    let printer = drawer :?> Printer
     if haveFile then
-        printer.PrintMessage (file.GetFields().ToString())
+        printer.printList (file.GetFields())
     else 
-        printer.PrintMessage "this file can not be visualized"
+        drawer.PrintMessage "this file can not be visualized"
     0
  
+  
