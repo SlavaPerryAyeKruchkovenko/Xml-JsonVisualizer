@@ -2,12 +2,10 @@
 
 open System
 open VisualizerLogic
-open System.Threading
 open System.IO
 open Microsoft.FSharp.Core
 open Exstension
 open System.Text
-open System.Linq
 open System.Threading.Tasks
 
 type Printer() = 
