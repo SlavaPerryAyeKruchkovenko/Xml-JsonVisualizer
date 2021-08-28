@@ -110,15 +110,15 @@ let main argv =
         drawer.PrintMessage ("Open " + path())
         drawer.Clear()
 
-    let GetList(haveFile , file: ProjectFile) = 
+    let GetStringBuilder(haveFile , file: ProjectFile) = 
         if haveFile then
             file.GetFields()
         else 
-            ["this file can not be visualized"]
+            new StringBuilder("this file can not be visualized")
     
-    let printFile (list : string list, drawer: IDrawer)= 
+    let printFile (file : StringBuilder, drawer: IDrawer)= 
         let printer = drawer :?> Printer              
-        for value in list do 
+        for value in (file.ToString().Split('\n') |> Array.filter(fun x -> not (x = "" || Char.IsControl x.[0]))) do 
             let height = drawer.GetWindowHeight()
             let weight = drawer.GetWindowWeight()
             printer.printFrame height weight
@@ -131,7 +131,7 @@ let main argv =
     let file = fileTuple.Value
     let haveFile = fileTuple.IsSome    
     
-    let list = GetList(haveFile,file) |> List.rev
+    let list = GetStringBuilder(haveFile,file)
     printFile(list,drawer)
     0
  

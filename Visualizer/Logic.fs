@@ -7,6 +7,7 @@ open Newtonsoft.Json
 open Exstension
 open System.Xml.Linq
 open System.Xml
+open System.Text
 
 type IDrawer =
     abstract PrintError: message: Exception -> unit
@@ -20,7 +21,7 @@ type IDrawer =
 
 [<AbstractClass>]    
 type ProjectFile(path:string) =
-    abstract member GetFields : unit -> string list
+    abstract member GetFields : unit -> StringBuilder
 
 type JsonFile(path) = 
     inherit ProjectFile(path)
@@ -32,32 +33,34 @@ type JsonFile(path) =
         let rec getText (jsToken: JToken) = 
             
             let parseJObject( jsObject : JObject) =
-                let mutable json = []
+                let mutable json = new StringBuilder()
                 for field in jsObject.Properties() do 
 
                     let name  = field.Name
-                    json <- name :: json
+                    json <- json.AppendLine name
                     let value = field.Value
                     if value.ToString() = "" then
-                        json <- "null" :: json
+                        json <- json.AppendLine "null"
                     else 
-                        json <- getText value + json
+                        json <- json.AppendLine((getText value).ToString())
                 json
 
             let parseJArray( jsArray : JArray) =
-                let mutable json = []
+                let mutable json = new StringBuilder()
                 for _value in jsArray.Children() do 
-                    json <- getText _value + json
+                    json <- json.Append((getText _value).ToString())
                 json
             
             let parseProperty( jsProperty : JProperty) = 
-                [jsProperty.Name;jsProperty.Value.ToString()]
+                let mutable json = new StringBuilder()
+                json <- json.AppendLine jsProperty.Name
+                json.AppendLine(jsProperty.Value.ToString())
 
             match jsToken with 
             | :? JObject as jobject -> parseJObject jobject    
             | :? JArray as jarray  -> parseJArray jarray
             | :? JProperty as jproperty -> parseProperty jproperty
-            | _ -> [jsToken.ToString()]  
+            | _ -> new StringBuilder(jsToken.ToString()) 
             
         getText jToken   
     new () = JsonFile (Environment.CurrentDirectory + "\Save.json")
@@ -65,30 +68,40 @@ type JsonFile(path) =
 type XmlFile(path) = 
     inherit ProjectFile(path)
     override this.GetFields() =
-        use file = File.OpenText(path)           
-        use reader = XmlReader.Create(file)
-        let node = XNode.ReadFrom reader
+        use file = File.OpenText path           
+        use reader =   
+            XmlReader.Create(file)
+        let node = XDocument.Load reader
         let rec getText (node : XNode) = 
 
-            let parseXComment(comment: XComment) =     
-                ["Comment";comment.Value]
+            let parseXComment(comment: XComment) =  
+                let mutable xml = new StringBuilder()
+                xml<- xml.AppendLine "Comment"
+                xml.AppendLine(comment.Value.ToString())
 
             let parseContainer(container: XContainer) = 
-                let mutable xml = []
-                for element in container.Nodes() do
-                    xml <- getText element + xml
+                let mutable xml = new StringBuilder()
+                for element in container.Nodes() do  
+                    if not (element = null || element.ToString() = "") then
+                        let array = element.ToString().Split('>')
+                        if array.Length > 2 then
+                            xml <- xml.AppendLine(array.[0].Substring(1))
+                            xml <- xml.AppendLine(getText(element).ToString())                      
+                        else    
+                            xml <- xml.AppendLine(getText(element).ToString())  
                 xml
 
             let parseXDocumentType (document: XDocumentType) = 
-                [document.Name;
-                document.PublicId;
-                document.SystemId]
+                let mutable xml = new StringBuilder()
+                xml <- xml.AppendLine document.Name
+                xml <- xml.AppendLine document.PublicId
+                xml.AppendLine document.SystemId
             
             let parseXText (text : XText) = 
-                [text.Value]
+                    new StringBuilder(text.Value)    
             
             let parseXProcessingInstruction (instruction : XProcessingInstruction) = 
-                [instruction.Data]
+                new StringBuilder(instruction.Data)
             
             match node with
             | :? XComment as comment -> parseXComment comment    
@@ -96,7 +109,7 @@ type XmlFile(path) =
             | :? XDocumentType as documentType -> parseXDocumentType documentType
             | :? XText as text  -> parseXText text
             | :? XProcessingInstruction as instruction -> parseXProcessingInstruction instruction
-            | _ -> [node.ToString()]
+            | _ -> new StringBuilder(node.ToString())
         getText node 
     new () = XmlFile (Environment.CurrentDirectory + "\Save.xml")
         
