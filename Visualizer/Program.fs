@@ -2,12 +2,13 @@
 
 open System
 open VisualizerLogic
-open System.IO
 open Microsoft.FSharp.Core
 open Exstension
 open System.Text
 open System.Threading.Tasks
 open FileEncoder
+open MoveCommand
+open System.Threading
 
 type Printer() = 
     interface IDrawer with             
@@ -32,7 +33,7 @@ type Printer() =
             Console.SetCursorPosition (2,(snd halfWindow))
 
        member this.ResetCursor(): unit = Console.SetCursorPosition(0,0) 
-       member this.PrintFrame(height,weight) = 
+       member this.PrintFrame(height,weight) = //print whole scren frame
            let printer = this :> IDrawer
 
            let printCells isLine size = 
@@ -69,38 +70,24 @@ type Printer() =
             printfn "%s" (text.ToString())
         
 
-(*let json = JObject.Parse(File.ReadAllText(fst path))*) 
-
 [<EntryPoint>]
 let main argv =           
     let drawer: IDrawer = upcast new Printer()
-
-    let getPath (prtiner: IDrawer) =   
-        try
-            prtiner.Clear()
-            prtiner.PrintMessage "Please Enter File"
-            let file = prtiner.GetText()
-            if File.Exists file then
-                file.ToString(),true                  
-            else
-                "File not found",false
-         with
-         | :? Exception as ex -> ex.Message,false
-
-    let mutable pathTuple = getPath drawer 
-    let havePath() = snd pathTuple
-    let path() = fst pathTuple
-
-    while not (havePath()) do
-         drawer.PrintMessage (path())
-         pathTuple <- getPath drawer
-    
-    let print = 
-        drawer.PrintMessage ("Open " + path())
+    let printer = drawer :?> Printer
+    let mutable path = Environment.CurrentDirectory
+    while true do
+        drawer.PrintMessage path
+        let folders = MoveCommand.GetAllFilesInFolder path
+        printer.printList folders
+        let cmds = drawer.GetText().Split(' ')
         drawer.Clear()
-
-    let parser = new ParseFileCommand(drawer , path())
-    parser.Execute()
+        try
+            let commandTuple = GetCommand(cmds, path ,drawer)
+            path <- snd commandTuple
+            let command = fst commandTuple
+            command.Execute()
+        with
+            | :? Exception as ex -> drawer.PrintError ex
     0
  
   
