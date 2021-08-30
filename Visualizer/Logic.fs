@@ -18,6 +18,7 @@ type IDrawer =
     abstract GetWindowWeight: unit -> int
     abstract SetCursorCentr:textSize: int -> unit
     abstract ResetCursor: unit -> unit
+    abstract PrintFrame: int*int -> unit
 
 [<AbstractClass>]    
 type ProjectFile(path:string) =
@@ -114,3 +115,14 @@ type XmlFile(path) =
     new () = XmlFile (Environment.CurrentDirectory + "\Save.xml")
         
 
+type TxtFile(path) = 
+    inherit ProjectFile(path)
+    override this.GetFields() = 
+        use file = File.OpenText path
+        let fileLines = file.ReadToEnd().Split('\n')
+        let mutable txt = new StringBuilder()
+        for _string in fileLines do
+            let parseLine = _string.Split(' ')|> Array.filter(fun x -> not (x = ""))
+            for word in parseLine do
+                txt <- txt.AppendLine word
+        txt

@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Exstension.fs" />
     <Compile Include="Logic.fs" />
+    <Compile Include="Command.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
