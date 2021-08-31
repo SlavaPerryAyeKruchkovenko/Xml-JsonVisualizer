@@ -79,10 +79,10 @@ let main argv =
         drawer.PrintMessage path
         let folders = MoveCommand.GetAllFilesInFolder path
         printer.printList folders
-        let cmds = drawer.GetText().Split(' ')
+        //let cmds = drawer.GetText().Split(' ')
         drawer.Clear()
         try
-            let commandTuple = GetCommand(cmds, path ,drawer)
+            let commandTuple = GetCommand(argv, path ,drawer)
             path <- snd commandTuple
             let command = fst commandTuple
             command.Execute()

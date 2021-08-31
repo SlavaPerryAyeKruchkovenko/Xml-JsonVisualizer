@@ -94,7 +94,7 @@ module MoveCommand =
             if Directory.Exists(path) then
                 let files = Directory.GetFiles(path)
                 let folders = Directory.GetDirectories(path)
-                let mutable directories =[]
+                let mutable directories = []
                 for file in files do
                     directories <- file :: directories
                 for folder in folders do
